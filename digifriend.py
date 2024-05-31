@@ -144,7 +144,6 @@ def retrieve_response(query, df, word_threshold=3):
     else:
         response = generate_response_with_dialogpt(query)
 
-    # Add a condition to check if the response contains any of the specified words
     forbidden_words = ["love", "girlfriend", "boyfriend", "cheated", "ex", "not good enough"]
     for word in forbidden_words:
         if word in response.lower():
@@ -335,19 +334,16 @@ def speak(text):
 def home():
     global introline, final_emotion, prediction_done
 
-    # Execute emotion prediction only if it hasn't been done yet
     if not prediction_done:
-        final_emotion = 'happy'
+        final_emotion = perform_real_time_prediction()
         get_corpus_file_path()
         prediction_done = True
 
-    # Generate the introline audio file
     tts = gTTS(text=introline, lang='en')
     audio_data = io.BytesIO()
     tts.write_to_fp(audio_data)
     audio_data.seek(0)
 
-    # Encode the audio data as base64
     audio_base64 = base64.b64encode(audio_data.getvalue()).decode('utf-8')
 
     response = ''
@@ -362,7 +358,6 @@ def home():
                 audio_file.save(temp_audio.name)
                 temp_wav = temp_audio.name.replace('.webm', '.wav')
 
-                # Convert WebM to WAV using ffmpeg
                 try:
                     subprocess.run(['ffmpeg', '-i', temp_audio.name, temp_wav], check=True)
                 except subprocess.CalledProcessError as e:
@@ -387,11 +382,10 @@ def home():
             except sr.RequestError as e:
                 return jsonify({"error": f"Could not request results from Google Speech Recognition service; {e}"}), 500
             finally:
-                temp_audio.close()  # Close the file before removing it
+                temp_audio.close() 
                 os.remove(temp_audio.name)
                 os.remove(temp_wav)
 
-            # Process the recognized text to get the response
             if text in casual_responses:
                 response = casual_responses[text]
             else:
@@ -425,7 +419,7 @@ def home():
 
 @app.route('/analyze_latest_screenshot', methods=['GET'])
 def analyze_latest_screenshot():
-    final_emotion = 'happy'
+    final_emotion = perform_real_time_prediction()
     if final_emotion:
         get_corpus_file_path()
         return {
